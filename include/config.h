@@ -8,7 +8,7 @@
 #include <chrono>
 
 int sample_size = 100;
-int seed = std::time(nullptr);
+int seed = 1682346302;// std::time(nullptr);
 bool MatPlotShow = true;
 
 #endif //EXAMPLE_CONFIG_H

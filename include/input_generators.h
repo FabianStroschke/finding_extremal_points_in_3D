@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <ctime>
-#include "../external/glm/glm.hpp"
+#include "glm/glm.hpp"
 #include "CGALSetup.h"
 
 

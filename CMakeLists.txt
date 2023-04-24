@@ -7,16 +7,11 @@ project(WIP)
 
 # add include dir
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-#include matplotlib
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/external/matplotlibcpp")
-
-# find python libraries
-find_package(Python 3.7 EXACT COMPONENTS Interpreter Development NumPy REQUIRED)
-include_directories(${Python_INCLUDE_DIRS} ${Python_NumPy_INCLUDE_DIRS})
-
 #add glm
-add_subdirectory(external/glm)
+#add_subdirectory(external/glm)
+
+#add polyscope
+add_subdirectory(external/polyscope)
 
 #add CGAL
 find_package(CGAL REQUIRED COMPONENTS Core)
@@ -30,9 +25,7 @@ add_executable(octreeScan octree_scan.cpp src/input_generators.cpp)
 
 #link main
 target_link_libraries(optimizedGrahamScan
-        Python::Python
-        Python::Module
-        Python::NumPy
+        polyscope
         )
 
 #link gscan
@@ -41,21 +34,15 @@ target_link_libraries(grahamScan CGAL::CGAL CGAL::CGAL_Core)
 #link quadscan
 target_link_libraries(quadtreeScan CGAL::CGAL CGAL::CGAL_Core)
 target_link_libraries(quadtreeScan
-        Python::Python
-        Python::Module
-        Python::NumPy
+        Polyscope
         )
 
 #link quickhull
 target_link_libraries(quickhull CGAL::CGAL CGAL::CGAL_Core)
 target_link_libraries(quickhull
-        Python::Python
-        Python::Module
-        Python::NumPy
+        Polyscope
         )
 target_link_libraries(octreeScan CGAL::CGAL CGAL::CGAL_Core)
 target_link_libraries(octreeScan
-        Python::Python
-        Python::Module
-        Python::NumPy
+        Polyscope
         )

@@ -1,10 +1,12 @@
 #include <fstream>
-#include "external/glm/glm.hpp"
 #include "include/input_generators.h"
 #include "include/config.h"
-#include <vector>
-#include "matplotlibcpp.h"
+#include "glm/glm.hpp"
+#include "polyscope/polyscope.h"
+#include "polyscope/point_cloud.h"
+#include "polyscope/curve_network.h"
 
+#include <vector>
 
 #define log_function_time(f, oStream) std::chrono::steady_clock::time_point logger_begin = std::chrono::steady_clock::now(); f;  std::chrono::steady_clock::time_point logger_end = std::chrono::steady_clock::now(); log <<  std::chrono::duration_cast<std::chrono::microseconds>(logger_end - logger_begin).count();
 
@@ -21,15 +23,32 @@ int main() {
     log << sample_size << ",";
     log_function_time(auto res = optimizedGrahamScanVec2(input.pointCloud, input.fixPoint, MatPlotShow), log);
     log << "\n";
+
     std::cout << res[0].x << "|" << res[0].y << "\n";
     std::cout << res[1].x << "|" << res[1].y << "\n";
     std::cout << "_____________________________________________\n";
     std::cout << seed << "\n";
 
+    //Polyscope
+    //initialize polyscope
+    polyscope::init();
+    // Set the camera to 2D mode
+    polyscope::view::style = polyscope::view::NavigateStyle::Planar;
+    polyscope::registerPointCloud2D("flat points", input.pointCloud);
+    polyscope::registerPointCloud2D("Fixpoint", std::vector<glm::vec2>({input.fixPoint}));
+    polyscope::registerPointCloud2D("Results", res);
+
+    std::vector<glm::vec2> nodes {res[0]+(res[0]-input.fixPoint),input.fixPoint, res[1]+(res[1]-input.fixPoint)};
+    std::vector<std::array<size_t, 2>> edges = {{0,1},{1,2}};
+
+    // Add the curve network
+    polyscope::registerCurveNetwork2D("Result Lines", nodes, edges);
+
+
+    polyscope::show();
+
     log.close();
 }
-
-namespace plt = matplotlibcpp;
 
 struct angleVec2Pair {
     double angle;
@@ -42,7 +61,6 @@ struct angleVec2Pair {
     }
 };
 
-//TODO: Matplot doesnt work from different source file
 std::vector<glm::vec2> optimizedGrahamScanVec2(std::vector<glm::vec2> &pointCloud, glm::vec2 &fixPoint, bool show) {
     std::vector<std::vector<angleVec2Pair>> vectorList(360);
     for (auto &p: pointCloud) {
@@ -71,35 +89,10 @@ std::vector<glm::vec2> optimizedGrahamScanVec2(std::vector<glm::vec2> &pointClou
     }
 
     int offset = -1;
-    double min = 0;
-    double max = 0;
-    double angle = 0;
+    int min = 0;
+    int max = 0;
+    int angle = 0;
     for (int i = 0; i < vectorList.size(); i++) {
-        //Matplot
-        if (show) {
-            for (auto &[a, v]: vectorList[i]) {
-                x.emplace_back(v.x);
-                y.emplace_back(v.y);
-                line.first[1] = v.x;
-                line.second[1] = v.y;
-                //std::cout << k<<"\n";
-                plt::clf();
-                plt::ylim(-120, 120);
-                plt::xlim(-120, 120);
-                plt::plot(x, y, {{"linewidth",  "0.0"},
-                                 {"marker",     "x"},
-                                 {"markersize", "2.5"}});
-                plt::plot(x1, y1, {{"linewidth",       "0.0"},
-                                   {"marker",          "o"},
-                                   {"markerfacecolor", "r"},
-                                   {"markeredgecolor", "r"}});
-                plt::plot(line.first, line.second, {{"linewidth", "0.5"}});
-
-                plt::draw();
-                plt::pause(0.001);
-            }
-        }
-
         if (not vectorList[i].empty()) {
             if (offset == -1) offset = i;
             if (angle > max - min) {
@@ -120,20 +113,6 @@ std::vector<glm::vec2> optimizedGrahamScanVec2(std::vector<glm::vec2> &pointClou
     **/
     angleVec2Pair vmin = *(std::max_element(vectorList[min].begin(), vectorList[min].end()));
     angleVec2Pair vmax = *(std::min_element(vectorList[max].begin(), vectorList[max].end()));
-
-    //Matplot
-    if (show) {
-        std::pair<std::vector<float>, std::vector<float>> res;
-        res.first.emplace_back(vmin.vec.x + (vmin.vec.x - fixPoint.x));
-        res.first.emplace_back(fixPoint.x);
-        res.first.emplace_back(vmax.vec.x + (vmax.vec.x - fixPoint.x));
-        res.second.emplace_back(vmin.vec.y + (vmin.vec.y - fixPoint.y));
-        res.second.emplace_back(fixPoint.y);
-        res.second.emplace_back(vmax.vec.y + (vmax.vec.y - fixPoint.y));
-        plt::plot(res.first, res.second, {{"linewidth", "1.5"}});
-
-        plt::show();
-    }
 
     auto theta = vmax.angle - vmin.angle;
     if (vmax.angle < vmin.angle) theta = 360 + vmax.angle - vmin.angle;
