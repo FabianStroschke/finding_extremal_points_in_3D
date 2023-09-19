@@ -8,14 +8,29 @@
 #include "CGALSetup.h"
 #include <CGAL/Octree.h>
 #include <CGAL/Kd_tree.h>
-#include <CGAL/Search_traits_3.h>
+#include <CGAL/Search_traits.h>
 
+enum CH_LOCATION{INSIDE,BORDER,ISOLATED};
 
-//typedefs
 typedef Kernel::Point_3 Point_3;
-typedef CGAL::Search_traits_3<Kernel >  Traits;
+class Point_3_prop: public Point_3 {
+public:
+    CH_LOCATION loc = ISOLATED;
+    using Point_3::Point_3;
+};
+
+struct Construct_coord_iterator {
+    typedef  const double* result_type;
+    const double* operator()(const Point_3_prop& p) const
+    { return static_cast<const double*>(p.cartesian_begin()); }
+    const double* operator()(const Point_3_prop& p, int)  const
+    { return static_cast<const double*>(p.cartesian_end()); }
+};
+
+typedef CGAL::Search_traits<double, Point_3_prop, const double*, Kernel::Construct_cartesian_const_iterator_3 , CGAL::Dimension_tag<3>> Traits;
 typedef CGAL::Kd_tree<Traits> Kd_tree;
 typedef CGAL::Octree<Kernel, std::vector<Kernel::Point_3>> Octree;
+
 
 
 //TODO:change to Clockwise / counter clockwise?
